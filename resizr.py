@@ -57,16 +57,19 @@ if __name__ == '__main__':
     reddit.login(USER, PASS)
     print("Sucessfully logged in")
 
-    with open('tmp/already_done.txt', mode='a+') as already_done:
+    with open('tmp/already_done.txt', mode='a+', encoding='utf-8') as already_done:
         while True:
             for subreddit in subreddits:
                 curSub = reddit.get_subreddit(subreddit)
                 newSubmissions = curSub.get_new(limit=20)
                 for submission in newSubmissions:
-                    if submission.id not in already_done.read() and matches_title(submission):
-                        print("Match found! {}".format(submission.short_link))
+                    already_done.seek(0)  # So that .read() will actually read the whole file
+                    already_done_string = already_done.read()
+
+                    if submission.id not in already_done_string and matches_title(submission):
+                        print("Match found! id:{} url:{}".format(submission.id, submission.short_link))
                         reply = "This matches! Yay!"
                         submission.add_comment(reply)
-                        already_done.write(submission.id)
+                        already_done.write(submission.id + "\n")
                         #reply = assemble_reply(submission)
                         # testing stuff, this will be uncommented later
