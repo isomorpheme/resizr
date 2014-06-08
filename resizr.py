@@ -57,7 +57,7 @@ if __name__ == '__main__':
     reddit.login(USER, PASS)
     print("Sucessfully logged in")
 
-    with open('tmp/already_done.txt', 'a') as already_done:
+    with open('tmp/already_done.txt', mode='a+') as already_done:
         while True:
             for subreddit in subreddits:
                 curSub = reddit.get_subreddit(subreddit)
