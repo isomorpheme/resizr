@@ -216,5 +216,4 @@ pip-log.txt
 
 ### Non-default stuff starts here ###
 *.txt
-tmp/
 config.ini
