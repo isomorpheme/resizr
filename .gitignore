@@ -215,5 +215,6 @@ pip-log.txt
 .mr.developer.cfg
 
 ### Non-default stuff starts here ###
+*_test.py
 *.txt
 config.ini
