@@ -1,4 +1,6 @@
-import praw
+import warnings
+with warnings.catch_warnings():  # Deprecation warning supression. PRAW dev pls fix
+    import praw
 import os
 import errno
 import configparser
