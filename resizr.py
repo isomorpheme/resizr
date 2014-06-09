@@ -4,18 +4,28 @@ import errno
 import configparser
 import re
 from PIL import Image
+import requests
+
+IMAGE_EXTENSIONS =[
+    '.jpg'
+]
 
 # Config reading
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-USER = config['UserAgent']['user']
-PASS = config['UserAgent']['pass']
-USER_AGENT = config['UserAgent']['AgentString']
+# Reddit API data
+REDDIT_USER = config['UserAgent']['user']
+REDDIT_PASS = config['UserAgent']['pass']
+REDDIT_USER_AGENT = config['UserAgent']['AgentString']
 
 SUBREDDITS = config['General']['subreddits'].split(';')
 
-TITLE_REGEX = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")
+TITLE_REGEX = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")  # Regular expression for searching size requests
+
+#Imgur API data
+IMGUR_BASE = "http://api.imgur.com/3/"
+
 
 
 def matches_title(submission):
@@ -33,7 +43,13 @@ def parse_size(submission):
 
 def download_image(submission):
     """Download the image a submission links to and store it in tmp, named after the submission ID"""
-    pass
+
+    for extension in IMAGE_EXTENSIONS:
+        if submission.url.endswith(extension):
+            res = requests.get(submission.url)
+            with open('tmp/{}.jpg'.format(submission.id), mode='wb') as img:
+                img.write(res.content)
+
 
 
 def upload_image(image):
@@ -54,8 +70,8 @@ def assemble_reply(submission):
 
 
 if __name__ == '__main__':
-    reddit = praw.Reddit(user_agent=USER_AGENT)
-    reddit.login(USER, PASS)
+    reddit = praw.Reddit(user_agent=REDDIT_USER_AGENT)
+    reddit.login(REDDIT_USER, REDDIT_PASS)
     print("Sucessfully logged in")
 
     try:  # Make the tmp subdir only if it exists
@@ -75,6 +91,10 @@ if __name__ == '__main__':
 
                     if submission.id not in already_done_string and matches_title(submission):
                         print("Match found! id:{} url:{}".format(submission.id, submission.short_link))
+
+                        download_image(submission)
+                        print("Image downloaded!")
+
                         reply = "This matches! Yay!"
                         submission.add_comment(reply)
                         already_done.write(submission.id + "\n")
