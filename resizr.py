@@ -7,6 +7,8 @@ import requests
 with warnings.catch_warnings():  # Deprecation warning supression. PRAW dev pls fix
     import praw
 
+import base64
+import json
 from PIL import Image
 
 IMAGE_EXTENSIONS =[
@@ -17,17 +19,22 @@ IMAGE_EXTENSIONS =[
 config = configparser.ConfigParser()
 config.read('config.ini')
 
+#Imgur API data
+IMGUR_CLIENT_ID = config['Imgur']['client_id']
+IMGUR_CLIENT_SECRET = config['Imgur']['client_secret']
+
+IMGUR_BASE = "https://api.imgur.com/3/"
+IMGUR_PORT = '443'
+IMGUR_UPLOAD = IMGUR_BASE + "upload"
+
 # Reddit API data
-REDDIT_USER = config['UserAgent']['user']
-REDDIT_PASS = config['UserAgent']['pass']
-REDDIT_USER_AGENT = config['UserAgent']['AgentString']
+REDDIT_USER = config['Reddit']['user']
+REDDIT_PASS = config['Reddit']['pass']
+REDDIT_USER_AGENT = config['Reddit']['user_agent']
 
 SUBREDDITS = config['General']['subreddits'].split(';')
 
 TITLE_REGEX = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")  # Regular expression for searching size requests
-
-#Imgur API data
-IMGUR_BASE = "http://api.imgur.com/3/"
 
 #Google API data
 GOOGLE_SBI_UPLOAD = "http://www.google.com/searchbyimage/upload"
@@ -81,13 +88,28 @@ def sbi_link(submission):
     return res.headers
 
 
-def upload_image(image):
-    """Upload the image to imgur"""
-    pass
+def upload_image(image_path, name):
+    """Upload the image to imgur, and return link to image"""
+    with open(image_path, mode='rb') as img:
+        b64 = base64.b64encode(img.read())
+
+    data = {
+        'image': b64,
+        'type': 'b64',
+        'name': name
+    }
+
+    headers = {'Authorization': "Client-ID " +IMGUR_CLIENT_ID}
+
+    res = requests.post(IMGUR_UPLOAD, data=data, headers=headers)
+    return json.loads(res.text)['data']['link']
 
 
 def reply(submission):
-    """Assemble the reply, i.e. do all the image magic and put it in a nicely formatted comment"""
+    """
+    The main part of making the reply. Downloads the image, processes it, and adds all the links in a comment.
+    The comment is then posted.
+    """
     requestSize = parse_size(submission)
     
     print("Match found! url:{}".format(submission.id, submission.short_link))
@@ -95,14 +117,16 @@ def reply(submission):
     download_image(submission)
     print("Image downloaded!")
 
-    google_link = sbi_link(submission)
-    print(google_link)
+    link = upload_image("tmp/{}.jpg".format(submission.id), "{}-test".format(submission.id))
+    print("Image uploaded! [Imgur link]({})".format(link))
 
-    reply = "This matches! [Image search]({})".format(google_link)
+    #google_link = sbi_link(submission)
+    #print(google_link)
+    # doesn't work yet
+
+    reply = "This matches! [Imgur link]({})".format(link)
     submission.add_comment(reply)
     already_done.write(submission.id + "\n")
-    #reply = assemble_reply(submission)
-    # testing stuff, this will be uncommented later
 
 
 if __name__ == '__main__':
