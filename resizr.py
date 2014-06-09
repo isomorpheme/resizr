@@ -13,21 +13,21 @@ USER = config['UserAgent']['user']
 PASS = config['UserAgent']['pass']
 USER_AGENT = config['UserAgent']['AgentString']
 
-subreddits = config['General']['subreddits'].split(';')
+SUBREDDITS = config['General']['subreddits'].split(';')
 
-titleRegex = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")
+TITLE_REGEX = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")
 
 
 def matches_title(submission):
     """Uses regex to check if the title matches the pattern"""
-    match = titleRegex.search(submission.title)
+    match = TITLE_REGEX.search(submission.title)
     if match:
         return True
 
 
 def parse_size(submission):
     """Gets the X and Y sizes from the request using the groups defined in the regex"""
-    match = titleRegex.search(submission.title)
+    match = TITLE_REGEX.search(submission.title)
     return (int(match.group(1)), int(match.group(2)))
 
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     with open('tmp/already_done.txt', mode='a+', encoding='utf-8') as already_done:
         while True:
-            for subreddit in subreddits:
+            for subreddit in SUBREDDITS:
                 curSub = reddit.get_subreddit(subreddit)
                 newSubmissions = curSub.get_new(limit=20)
                 for submission in newSubmissions:
