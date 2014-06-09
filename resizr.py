@@ -82,16 +82,23 @@ def upload_image(image):
     pass
 
 
-def assemble_reply(submission):
+def reply(submission):
     """Assemble the reply, i.e. do all the image magic and put it in a nicely formatted comment"""
     requestSize = parse_size(submission)
     
+    print("Match found! url:{}".format(submission.id, submission.short_link))
+
     download_image(submission)
-    
-    #reply = "I have detected an image size in the title of your post! Requested size: {} "
-    #    "I've tried my best to create some resizes. Here they are:".format(str(requestSize))
-    
-    return reply
+    print("Image downloaded!")
+
+    google_link = google_image_search_link(submission)
+    print()
+
+    reply = "This matches! Yay!"
+    submission.add_comment(reply)
+    already_done.write(submission.id + "\n")
+    #reply = assemble_reply(submission)
+    # testing stuff, this will be uncommented later
 
 
 if __name__ == '__main__':
@@ -115,16 +122,5 @@ if __name__ == '__main__':
                     already_done_string = already_done.read()
 
                     if submission.id not in already_done_string and matches_title(submission):
-                        print("Match found! url:{}".format(submission.id, submission.short_link))
-
-                        download_image(submission)
-                        print("Image downloaded!")
-
-                        google_link = google_image_search_link(submission)
-                        print()
-
-                        reply = "This matches! Yay!"
-                        submission.add_comment(reply)
-                        already_done.write(submission.id + "\n")
-                        #reply = assemble_reply(submission)
-                        # testing stuff, this will be uncommented later
+                        reply(submission)
+                        
