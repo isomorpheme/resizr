@@ -1,12 +1,13 @@
 import warnings
-with warnings.catch_warnings():  # Deprecation warning supression. PRAW dev pls fix
-    import praw
 import os
 import errno
 import configparser
 import re
-from PIL import Image
 import requests
+with warnings.catch_warnings():  # Deprecation warning supression. PRAW dev pls fix
+    import praw
+
+from PIL import Image
 
 IMAGE_EXTENSIONS =[
     '.jpg'
@@ -60,11 +61,12 @@ def download_image(submission):
                 return img.read()
 
 
-def google_image_search_link(submission):
+def sbi_link(submission):
     """
     Takes binary image data, and POSTs this to googles image search server.
     Google's server then generates base64 data for the image search algorithm.
     This function then returns the resulting query url using this data.
+    **Not done yet.**
     More info: http://stackoverflow.com/questions/7584808/google-image-search-how-do-i-construct-a-reverse-image-search-url
     Also: http://www.rankpanel.com/blog/google-search-parameters/
     """
@@ -73,8 +75,10 @@ def google_image_search_link(submission):
             'encoded_image': img,
         }
 
-    res = requests.post(GOOGLE_SBI_UPLOAD, file=payload)
-    return res.headers['location']
+    res = requests.post(GOOGLE_SBI_UPLOAD, files={
+        'encoded_image': open('tmp/{}.jpg'.format(submission.id), mode='rb')
+        })
+    return res.headers
 
 
 def upload_image(image):
@@ -91,10 +95,10 @@ def reply(submission):
     download_image(submission)
     print("Image downloaded!")
 
-    google_link = google_image_search_link(submission)
-    print()
+    google_link = sbi_link(submission)
+    print(google_link)
 
-    reply = "This matches! Yay!"
+    reply = "This matches! [Image search]({})".format(google_link)
     submission.add_comment(reply)
     already_done.write(submission.id + "\n")
     #reply = assemble_reply(submission)
