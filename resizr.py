@@ -1,5 +1,6 @@
 import praw
-import time
+import os
+import errno
 import configparser
 import re
 from PIL import Image
@@ -56,6 +57,12 @@ if __name__ == '__main__':
     reddit = praw.Reddit(user_agent=USER_AGENT)
     reddit.login(USER, PASS)
     print("Sucessfully logged in")
+
+    try:  # Make the tmp subdir only if it exists
+        os.makedirs('tmp')
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
 
     with open('tmp/already_done.txt', mode='a+', encoding='utf-8') as already_done:
         while True:
