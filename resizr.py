@@ -11,7 +11,7 @@ import base64
 import json
 from PIL import Image
 
-IMAGE_EXTENSIONS =[
+IMAGE_EXTENSIONS = [
     '.jpg'
 ]
 
@@ -112,7 +112,7 @@ def reply(submission):
     """
     requestSize = parse_size(submission)
     
-    print("Match found! url:{}".format(submission.id, submission.short_link))
+    print("Match found! url:{}".format(submission.short_link))
 
     download_image(submission)
     print("Image downloaded!")
@@ -143,12 +143,11 @@ if __name__ == '__main__':
     with open('tmp/already_done.txt', mode='a+', encoding='utf-8') as already_done:
         while True:
             for subreddit in SUBREDDITS:
-                curSub = reddit.get_subreddit(subreddit)
-                newSubmissions = curSub.get_new(limit=20)
-                for submission in newSubmissions:
+                current_subreddit = reddit.get_subreddit(subreddit)
+                new_submissions = current_subreddit.get_new(limit=20)
+                for submission in new_submissions:
                     already_done.seek(0)  # So that .read() will actually read the whole file
                     already_done_string = already_done.read()
 
                     if submission.id not in already_done_string and matches_title(submission):
                         reply(submission)
-                        
