@@ -1,14 +1,17 @@
 import warnings
 import os
 import errno
-import configparser
-import re
+
 import requests
 with warnings.catch_warnings():  # Deprecation warning supression. PRAW dev pls fix
     import praw
 
-import base64
+import re
+import configparser
 import json
+import csv
+
+import base64
 from PIL import Image
 
 IMAGE_EXTENSIONS = [
@@ -118,15 +121,24 @@ def reply(submission):
     print("Image downloaded!")
 
     link = upload_image("tmp/{}.jpg".format(submission.id), "{}-test".format(submission.id))
-    print("Image uploaded! [Imgur link]({})".format(link))
+    print("Image uploaded! {}".format(link))
 
-    #google_link = sbi_link(submission)
-    #print(google_link)
-    # doesn't work yet
+
 
     reply = "This matches! [Imgur link]({})".format(link)
     submission.add_comment(reply)
-    already_done.write(submission.id + "\n")
+    mark_done(submission)
+
+
+def is_done(submission):
+    with open('aready_done.csv', newline='') as source_csv:
+        already_done = csv.reader(source_csv)
+
+
+def mark_done(submission):
+    with open('aready_done.csv', newline='') as source_csv:
+        already_done = csv.writer(source_csv)
+
 
 
 if __name__ == '__main__':
@@ -140,14 +152,14 @@ if __name__ == '__main__':
         if exception.errno != errno.EEXIST:
             raise
 
-    with open('tmp/already_done.txt', mode='a+', encoding='utf-8') as already_done:
-        while True:
-            for subreddit in SUBREDDITS:
-                current_subreddit = reddit.get_subreddit(subreddit)
-                new_submissions = current_subreddit.get_new(limit=20)
-                for submission in new_submissions:
-                    already_done.seek(0)  # So that .read() will actually read the whole file
-                    already_done_string = already_done.read()
+    if not os.path.isfile('tmp/already_done.csv'):
+        with open('tmp/already_done.csv', mode='x', newline='') as new_csv:
+            new_csv.write('id,deletehash')
 
-                    if submission.id not in already_done_string and matches_title(submission):
-                        reply(submission)
+    while True:
+        for subreddit in SUBREDDITS:
+            current_subreddit = reddit.get_subreddit(subreddit)
+            new_submissions = current_subreddit.get_new(limit=20)
+            for submission in new_submissions:
+                if submission.id not in already_done_string and matches_title(submission):
+                    reply(submission)
