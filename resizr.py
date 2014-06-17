@@ -3,6 +3,7 @@ import os
 import errno
 import configparser
 import re
+from urllib.parse import quote as url_quote
 import requests
 with warnings.catch_warnings():  # Deprecation warning supression. PRAW dev pls fix
     import praw
@@ -36,8 +37,8 @@ SUBREDDITS = config['General']['subreddits'].split(';')
 
 TITLE_REGEX = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")  # Regular expression for searching size requests
 
-#Google API data
-GOOGLE_SBI_UPLOAD = "http://www.google.com/searchbyimage/upload"
+#Google data
+GOOGLE_SBI_BASE = "https://www.google.com/searchbyimage?image_url="
 
 
 def matches_title(submission):
@@ -68,24 +69,11 @@ def download_image(submission):
                 return img.read()
 
 
-def sbi_link(submission):
+def sbi_link(direct_link):
     """
-    Takes binary image data, and POSTs this to googles image search server.
-    Google's server then generates base64 data for the image search algorithm.
-    This function then returns the resulting query url using this data.
-    **Not done yet.**
-    More info: http://stackoverflow.com/questions/7584808/google-image-search-how-do-i-construct-a-reverse-image-search-url
-    Also: http://www.rankpanel.com/blog/google-search-parameters/
+    Makes a link for a Google search by image, with the image being the one being linked to.
     """
-    with open('tmp/{}.jpg'.format(submission.id), mode='rb') as img:
-        payload = {
-            'encoded_image': img,
-        }
-
-    res = requests.post(GOOGLE_SBI_UPLOAD, files={
-        'encoded_image': open('tmp/{}.jpg'.format(submission.id), mode='rb')
-        })
-    return res.headers
+    return GOOGLE_SBI_BASE + url_quote(direct_link, safe='')
 
 
 def upload_image(image_path, name):
@@ -99,7 +87,7 @@ def upload_image(image_path, name):
         'name': name
     }
 
-    headers = {'Authorization': "Client-ID " +IMGUR_CLIENT_ID}
+    headers = {'Authorization': "Client-ID " + IMGUR_CLIENT_ID}
 
     res = requests.post(IMGUR_UPLOAD, data=data, headers=headers)
     return json.loads(res.text)['data']['link']
@@ -117,16 +105,13 @@ def reply(submission):
     download_image(submission)
     print("Image downloaded!")
 
-    link = upload_image("tmp/{}.jpg".format(submission.id), "{}-test".format(submission.id))
-    print("Image uploaded! [Imgur link]({})".format(link))
+    imgur_link = upload_image("tmp/{}.jpg".format(submission.id), "{}-test".format(submission.id))
+    print("Image uploaded! [Imgur link]({})".format(imgur_link))
 
-    #google_link = sbi_link(submission)
-    #print(google_link)
-    # doesn't work yet
+    google_link = sbi_link(imgur_link)
 
-    reply = "This matches! [Imgur link]({})".format(link)
+    reply = "This matches! [Imgur link]({}). [Search by image]({})".format(imgur_link, google_link)
     submission.add_comment(reply)
-    already_done.write(submission.id + "\n")
 
 
 if __name__ == '__main__':
@@ -151,3 +136,4 @@ if __name__ == '__main__':
 
                     if submission.id not in already_done_string and matches_title(submission):
                         reply(submission)
+                        already_done.write(submission.id + "\n")
