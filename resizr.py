@@ -1,13 +1,10 @@
-import warnings
 import os
 import errno
 import configparser
 import re
 from urllib.parse import quote as url_quote
 import requests
-with warnings.catch_warnings():  # Deprecation warning supression. PRAW dev pls fix
-    import praw
-
+import praw
 import base64
 import json
 from PIL import Image
@@ -99,7 +96,7 @@ def reply(submission):
     The comment is then posted.
     """
     requestSize = parse_size(submission)
-    
+
     print("Match found! url:{}".format(submission.short_link))
 
     download_image(submission)
