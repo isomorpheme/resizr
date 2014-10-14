@@ -32,7 +32,8 @@ REDDIT_USER_AGENT = config['Reddit']['user_agent']
 
 SUBREDDITS = config['General']['subreddits'].split(';')
 
-TITLE_REGEX = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")  # Regular expression for searching size requests
+# Regular expression for searching size requests
+TITLE_REGEX = re.compile(r"([0-9]+) ?[xX] ?([0-9]+)")
 
 #Google data
 GOOGLE_SBI_BASE = "https://www.google.com/searchbyimage?image_url="
